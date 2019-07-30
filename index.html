@@ -1,0 +1,90 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>sem-web browser demo</title>
+
+</head>
+<body>
+	<h1>Sem-Web Browser Demo</h1>
+	<div id="demo"></div>
+<script type="text/javascript" src="n3.js"></script>
+<script type="text/javascript" src="comunica-browser.js"></script>
+<script type="text/javascript">
+// Declare N3.js Store
+const store = new N3.Store();
+// Declare Comunica SPARQL engine
+const engine = Comunica.newEngine();
+// div for demo
+var div = document.getElementById("demo");
+
+// FIXME: enable any arbitrary number of triples
+// store triples in a list, and using the list size, determine when the triples
+// are done loading. Requires knowledge of how many triples are in the list
+var list = [], list_size = 15;
+// Download data
+var client = new XMLHttpRequest();
+client.open('GET', 'me.ttl', true);
+client.onreadystatechange = function() {
+	console.log(client.readyState);
+	if (client.readyState != 4) { return; }
+	console.log("file ready state change");
+	// Parse the data using N3.js
+  var downloaded_data = client.responseText;
+  var pre = document.createElement('pre');
+	var text = document.createTextNode("data: \n" + downloaded_data);
+	pre.appendChild(text);
+	div.appendChild(pre);
+	console.log("added data text");
+  const parser = new N3.Parser();
+  parser.parse(downloaded_data, (error, quad, prefixes) => {
+  	console.log(list.length, store._id, quad);
+    if (quad) { 
+    	// Store the data
+      store.addQuad(quad);
+      list.push(null);
+    }
+    else {
+    // null is returned when there is no more data to be parsed
+    // however, null is returned three times --> 0, 15, 30
+    // So this checks all triples have been loaded
+      if (list.length == list_size) {
+      	// execute querying
+      	execute_comunica();
+      }
+    }
+  });
+}
+client.send();
+
+// Query the data using SPARQL
+var query = 'SELECT DISTINCT ?s ?p ?o { ?s ?p ?o }';
+function execute_comunica() {
+	console.log("executing comunica");
+	var pre = document.createElement('pre');
+	var text = document.createTextNode("query: \n" + query);
+	pre.appendChild(text);
+	div.appendChild(pre);
+  engine.query(query,
+    { sources: [ { type: 'rdfjsSource', value: store } ] })
+    .then(function (result) {
+      result.bindingsStream.on('data', function (data) {
+        // Each variable binding is an RDFJS term
+        var text = "s:" + data.get('?s').value + "\n\t" +
+        	"p:" + data.get('?p').value + "\n\t" +
+        	"o:" + data.get('?o').value;
+        
+        var p = document.createElement("pre");
+        var text = document.createTextNode(text);
+        p.appendChild(text);
+        div.appendChild(p);
+      });
+    });
+
+}
+	
+</script>
+</body>
+</html>
