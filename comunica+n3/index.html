@@ -10,10 +10,10 @@
 <body>
 <h1>Sem-Web Browser Demo: Comunica + N3</h1>
 <div id="demo">
-  <div id="code"><h2>code</h2></div>
   <div id="query"><h2>query</h2></div>
   <div id="results"><h2>results</h2></div>
   <div id="data"><h2>data</h2></div> 
+  <div id="code"><h2>code</h2></div>
 </div>
 <script type="text/javascript" src="n3.js"></script>
 <script type="text/javascript" src="comunica-browser.js"></script>
@@ -55,17 +55,13 @@ client.onreadystatechange = function() {
 client.send();
 
 // Query the data using SPARQL
-var query = 'SELECT DISTINCT ?s ?p ?o { ?s ?p ?o }';
+var query = 'SELECT DISTINCT ?s ?p ?o { ?s ?p ?o } LIMIT 10';
 var pre = document.createElement('pre');
 pre.appendChild(document.createTextNode(query));
 document.getElementById('query').appendChild(pre);
 
 function execute_comunica() {
 	console.log("executing comunica");
-	var pre = document.createElement('pre');
-	var text = document.createTextNode("query: \n" + query);
-	pre.appendChild(text);
-	div.appendChild(pre);
   engine.query(query,
     { sources: [ { type: 'rdfjsSource', value: store } ] })
     .then(function (result) {
@@ -84,7 +80,7 @@ function execute_comunica() {
 }
 
 var pre = document.createElement('pre');
-pre.appendChild(document.createTextNode(document.body.innerHTML));
+pre.appendChild(document.createTextNode(document.getElementById('script').innerHTML));
 document.getElementById('code').appendChild(pre);
 	
 </script>

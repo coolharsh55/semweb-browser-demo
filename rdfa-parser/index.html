@@ -1,0 +1,71 @@
+<!doctype html>
+
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <title>sem-web browser demo</title>
+
+</head>
+<body>
+<h1>Sem-Web Browser Demo: RDFa parser</h1>
+<div id="demo">
+  <div><h2>RDFa</h2>
+    <!-- source: https://www.w3.org/blog/2011/05/rdfa-11-with-a-rich-snippet-ex/ -->
+    <div id="query" xmlns:v="http://rdf.data-vocabulary.org/#" typeof="v:Review">
+    <span property="v:itemreviewed">L’Amourita Pizza</span>
+    Reviewed by
+    <span property="v:reviewer">Ulysses Grant</span> on
+    <span property="v:dtreviewed" content="2009-01-06">Jan 6</span>.
+    <span property="v:summary">Delicious, tasty pizza on Eastlake!</span>
+    <span property="v:description">L'Amourita serves up traditional wood-fired 
+    Neapolitan-style pizza, brought to your table promptly and without fuss. 
+    An ideal neighborhood pizza joint.</span>
+    Rating:
+    <span property="v:rating">4.5</span>
+    </div>
+  </div>
+  <div id="results"><h2>extracted triples</h2></div>
+  <div id="code"><h2>code</h2></div>
+</div>
+<script type="text/javascript" src="rdfa-streamer.js"></script>
+<script id='script' type="text/javascript">
+const myParser = new RDFa.RdfaParser({ baseIRI: 'https://example.com/', contentType: 'text/html' });
+var div = document.getElementById("results");
+myParser
+  .on('data', function(data) {
+    console.log(data);
+    var text = "s:" + data.subject.value + "\n\t" +
+            "p:" + data.predicate.value + "\n\t" +
+            "o:" + data.object.value;
+        
+        var pre = document.createElement("pre");
+        pre.appendChild(document.createTextNode(text));
+        document.getElementById('results').appendChild(pre);
+    })
+  .on('error', console.error)
+  .on('end', () => console.log('All triples were parsed!'));
+
+const data = document.getElementById('query').innerHTML
+myParser.write(data);
+myParser.end();
+
+var pre = document.createElement('pre');
+pre.appendChild(document.createTextNode(data));
+document.getElementById('query').innerHTML = escapeHtml(data);
+
+var pre = document.createElement('pre');
+pre.appendChild(document.createTextNode(document.getElementById('script').innerHTML));
+document.getElementById('code').appendChild(pre);
+
+function escapeHtml(unsafe) {
+    return unsafe
+         .replace(/&/g, "&amp;")
+         .replace(/</g, "&lt;")
+         .replace(/>/g, "&gt;")
+         .replace(/"/g, "&quot;")
+         .replace(/'/g, "&#039;");
+ }
+</script>
+</body>
+</html>
