@@ -1,0 +1,82 @@
+<!DOCTYPE HTML>
+
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Shacl-engine</title>
+    <!-- <link rel="stylesheet" type="text/css" href=""> -->
+    <style type="text/css">
+    html, body {
+        max-width: 800px;
+        margin: auto;
+    }
+    </style>
+<script src='bundle.js'></script>
+</head>
+<body>
+    <h1>Shacl-engine</h1>
+    <p>This demo uses the <a href="https://github.com/rdf-ext/shacl-engine">shacl-engine</a> library to validate a RDF graph using SHACL.</p>
+    <p>
+        <button id="btn-validate" onclick="validate()">Validate Graph </button>
+        graph 1: <span id="result1">...</span>; graph 2: <span id="result2">...</span>; 
+    </p>
+    <p><strong>Data Graph1</strong></p><div id="datagraph1"></div>
+    <p><strong>Data Graph2</strong></p><div id="datagraph2"></div>
+    <p><strong>Shape Graph</strong></p><div id="shapegraph"></div>
+<script type="text/javascript">
+const shapegraph = `@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ex: <http://example.org/> .
+ex:PersonShape
+    a sh:NodeShape ;
+    sh:targetClass ex:Person ;
+    sh:property [
+        sh:path ex:name ;
+        sh:datatype xsd:string ;
+        sh:name "name" ;
+        sh:minCount 1 ;
+    ] .`;
+
+const datagraph1 = `ex:Alice
+        a ex:Person .`;
+const datagraph2 = `@prefix ex: <http://example.org/> .
+    ex:Alice
+        a ex:Person ;
+        ex:name "Alice" .`;
+var pre = document.createElement('pre');
+pre.appendChild(document.createTextNode(shapegraph));
+document.getElementById('shapegraph').appendChild(pre);
+pre = document.createElement('pre');
+pre.appendChild(document.createTextNode(datagraph1));
+document.getElementById('datagraph1').appendChild(pre);
+pre = document.createElement('pre');
+pre.appendChild(document.createTextNode(datagraph2));
+document.getElementById('datagraph2').appendChild(pre);
+
+const dataset1 = rdfDataset.dataset(null);
+const dataset2 = rdfDataset.dataset(null);
+ttl_read(shapegraph+datagraph1, {
+    data(quad) { dataset1.add(quad); },
+    eof(prefixes) { }, // end of data loading
+});
+ttl_read(shapegraph+datagraph2, {
+    data(quad) { dataset2.add(quad); },
+    eof(prefixes) { }, // end of data loading
+});
+
+async function validate() {
+    // dataset 1
+    var dataset = dataset1;
+    var validator = new Validator(dataset, { factory: rdfDataModel });
+    var report = await validator.validate({ dataset });
+    document.getElementById('result1').innerHTML = report.conforms;
+    // dataset 2
+    dataset = dataset2;
+    validator = new Validator(dataset, { factory: rdfDataModel });
+    report = await validator.validate({ dataset });
+    document.getElementById('result2').innerHTML = report.conforms;
+}
+</script>
+</body>
+</html>
